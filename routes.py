@@ -167,8 +167,7 @@ def export_csv(data, filename, headers):
     output.seek(0)
     return send_file(io.BytesIO(output.getvalue().encode()),
                      mimetype='text/csv',
-                     download_name=filename,
-                     as_attachment=True)
+                     download_name=filename)
 
 def export_pdf(data, filename, headers, report_type):
     pdf = FPDF()
