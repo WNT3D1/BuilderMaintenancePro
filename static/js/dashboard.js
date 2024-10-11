@@ -42,7 +42,7 @@ function createWorkOrderChart(data) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom',
+                    display: false
                 }
             }
         }
@@ -66,23 +66,16 @@ function createCompletionTrendChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Completed Orders'
-                    }
-                }
-            },
             plugins: {
                 legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    display: false
+                },
+                y: {
                     display: false
                 }
             }

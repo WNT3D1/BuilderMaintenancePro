@@ -32,27 +32,27 @@
 </div>
 {% endif %}
 
-<div class="row">
-    <div class="col-md-12 mb-4">
+<div class="row mb-4">
+    <div class="col-12">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Work Order Statistics</h5>
                 <div class="row">
-                    <div class="col-md-3">
-                        <p class="mb-1">Total Work Orders</p>
-                        <p class="display-6" id="total-work-orders">{{ pending_count + in_progress_count + completed_count }}</p>
+                    <div class="col-md-3 col-6">
+                        <p class="mb-0">Total</p>
+                        <p class="h4" id="total-work-orders">{{ pending_count + in_progress_count + completed_count }}</p>
                     </div>
-                    <div class="col-md-3">
-                        <p class="mb-1">Pending</p>
-                        <p class="display-6 text-warning" id="pending-work-orders">{{ pending_count }}</p>
+                    <div class="col-md-3 col-6">
+                        <p class="mb-0">Pending</p>
+                        <p class="h4 text-warning" id="pending-work-orders">{{ pending_count }}</p>
                     </div>
-                    <div class="col-md-3">
-                        <p class="mb-1">In Progress</p>
-                        <p class="display-6 text-info" id="in-progress-work-orders">{{ in_progress_count }}</p>
+                    <div class="col-md-3 col-6">
+                        <p class="mb-0">In Progress</p>
+                        <p class="h4 text-info" id="in-progress-work-orders">{{ in_progress_count }}</p>
                     </div>
-                    <div class="col-md-3">
-                        <p class="mb-1">Completed</p>
-                        <p class="display-6 text-success" id="completed-work-orders">{{ completed_count }}</p>
+                    <div class="col-md-3 col-6">
+                        <p class="mb-0">Completed</p>
+                        <p class="h4 text-success" id="completed-work-orders">{{ completed_count }}</p>
                     </div>
                 </div>
             </div>
@@ -60,27 +60,27 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6 mb-4">
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Work Order Status</h5>
-                <canvas id="work-order-chart" style="height: 200px;"></canvas>
+                <canvas id="work-order-chart" style="height: 150px;"></canvas>
             </div>
         </div>
     </div>
-    <div class="col-md-6 mb-4">
+    <div class="col-md-6 mb-3">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Completion Trend (Last 30 Days)</h5>
-                <canvas id="completion-trend-chart" style="height: 200px;"></canvas>
+                <canvas id="completion-trend-chart" style="height: 150px;"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-12 mb-4">
+    <div class="col-md-12">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Recent Maintenance Logs</h5>
@@ -95,7 +95,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for log in recent_logs[:5] %}
+                            {% for log in recent_logs[:3] %}
                             <tr>
                                 <td>{{ log.date }}</td>
                                 <td>{{ log.lot_number }}</td>
