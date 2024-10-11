@@ -5,12 +5,39 @@
 {% block content %}
 <h1 class="mb-4">Dashboard</h1>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if unread_notifications %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">Critical Notifications</h5>
+    </div>
+    <ul class="list-group list-group-flush">
+        {% for notification in unread_notifications %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ notification.message }}
+            <button class="btn btn-sm btn-outline-secondary mark-as-read" data-notification-id="{{ notification.id }}">Mark as Read</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
 <div class="row">
     <div class="col-md-3 mb-4">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Total Work Orders</h5>
-                <p class="card-text display-4" id="total-work-orders">-</p>
+                <p class="card-text display-4" id="total-work-orders">{{ pending_count + in_progress_count + completed_count }}</p>
             </div>
         </div>
     </div>
@@ -18,7 +45,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Pending</h5>
-                <p class="card-text display-4 text-warning" id="pending-work-orders">-</p>
+                <p class="card-text display-4 text-warning" id="pending-work-orders">{{ pending_count }}</p>
             </div>
         </div>
     </div>
@@ -26,7 +53,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">In Progress</h5>
-                <p class="card-text display-4 text-info" id="in-progress-work-orders">-</p>
+                <p class="card-text display-4 text-info" id="in-progress-work-orders">{{ in_progress_count }}</p>
             </div>
         </div>
     </div>
@@ -34,7 +61,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h5 class="card-title">Completed</h5>
-                <p class="card-text display-4 text-success" id="completed-work-orders">-</p>
+                <p class="card-text display-4 text-success" id="completed-work-orders">{{ completed_count }}</p>
             </div>
         </div>
     </div>
@@ -94,4 +121,26 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const markAsReadButtons = document.querySelectorAll('.mark-as-read');
+    markAsReadButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-notification-id');
+            fetch(`/mark_notification_as_read/${notificationId}`, {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.closest('li').remove();
+                    if (document.querySelectorAll('.mark-as-read').length === 0) {
+                        document.querySelector('.card.mb-4').remove();
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

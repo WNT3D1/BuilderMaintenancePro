@@ -26,7 +26,17 @@ class WorkOrder(db.Model):
     completed_date = db.Column(db.Date)
     notes = db.Column(db.Text)
     priority = db.Column(db.String(20), default='Medium')
+    is_critical = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     maintenance_log = db.relationship('MaintenanceLog', backref=db.backref('work_orders', lazy=True))
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    work_order_id = db.Column(db.Integer, db.ForeignKey('work_order.id'), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    work_order = db.relationship('WorkOrder', backref=db.backref('notifications', lazy=True))

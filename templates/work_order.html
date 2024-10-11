@@ -63,6 +63,7 @@
                         <th>Assigned To</th>
                         <th>Scheduled Date</th>
                         <th>Priority</th>
+                        <th>Critical</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -102,6 +103,10 @@
             <div class="mb-3">
                 {{ form.notes.label(class="form-label") }}
                 {{ form.notes(class="form-control", rows="4") }}
+            </div>
+            <div class="mb-3 form-check">
+                {{ form.is_critical(class="form-check-input") }}
+                {{ form.is_critical.label(class="form-check-label") }}
             </div>
             <button type="submit" class="btn btn-primary">Create Work Order</button>
         </form>

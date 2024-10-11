@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, DateField, SelectField
+from wtforms import StringField, TextAreaField, DateField, SelectField, BooleanField
 from wtforms.validators import DataRequired, Length
 
 class MaintenanceLogForm(FlaskForm):
@@ -29,6 +29,7 @@ class WorkOrderForm(FlaskForm):
         ('Medium', 'Medium'),
         ('High', 'High')
     ], validators=[DataRequired()])
+    is_critical = BooleanField('Critical Task')
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])

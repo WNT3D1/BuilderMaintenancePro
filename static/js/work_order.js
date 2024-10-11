@@ -64,6 +64,7 @@ function updateWorkOrdersTable(workOrders) {
             <td>${order.assigned_to}</td>
             <td>${order.scheduled_date}</td>
             <td>${order.priority}</td>
+            <td>${order.is_critical ? 'Yes' : 'No'}</td>
             <td>
                 <button class="btn btn-sm btn-primary status-update-btn" data-work-order-id="${order.id}" data-status="In Progress">
                     Start

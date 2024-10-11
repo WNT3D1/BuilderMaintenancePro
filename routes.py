@@ -1,6 +1,6 @@
-from flask import render_template, request, redirect, url_for, jsonify
+from flask import render_template, request, redirect, url_for, jsonify, flash
 from app import app, db
-from models import Company, MaintenanceLog, WorkOrder
+from models import Company, MaintenanceLog, WorkOrder, Notification
 from forms import MaintenanceLogForm, WorkOrderForm, CompanySetupForm
 from datetime import datetime
 from sqlalchemy import func
@@ -18,12 +18,16 @@ def dashboard():
     # Get company info
     company = Company.query.first()
 
+    # Get unread notifications
+    unread_notifications = Notification.query.filter_by(is_read=False).order_by(Notification.created_at.desc()).all()
+
     return render_template('dashboard.html', 
                            pending_count=pending_count, 
                            in_progress_count=in_progress_count, 
                            completed_count=completed_count,
                            recent_logs=recent_logs,
-                           company=company)
+                           company=company,
+                           unread_notifications=unread_notifications)
 
 @app.route('/maintenance_log', methods=['GET', 'POST'])
 def maintenance_log():
@@ -51,10 +55,22 @@ def work_order():
             status=form.status.data,
             assigned_to=form.assigned_to.data,
             scheduled_date=form.scheduled_date.data,
-            notes=form.notes.data
+            notes=form.notes.data,
+            priority=form.priority.data,
+            is_critical=form.is_critical.data
         )
         db.session.add(new_order)
         db.session.commit()
+
+        if new_order.is_critical:
+            notification = Notification(
+                work_order_id=new_order.id,
+                message=f"Critical work order created: {new_order.maintenance_log.description[:50]}..."
+            )
+            db.session.add(notification)
+            db.session.commit()
+            flash('A critical work order has been created!', 'warning')
+
         return redirect(url_for('dashboard'))
     maintenance_logs = MaintenanceLog.query.all()
     return render_template('work_order.html', form=form, maintenance_logs=maintenance_logs)
@@ -74,6 +90,16 @@ def update_work_order_status():
         if new_status == 'Completed':
             work_order.completed_date = datetime.utcnow().date()
         db.session.commit()
+
+        if work_order.is_critical and new_status in ['In Progress', 'Completed']:
+            notification = Notification(
+                work_order_id=work_order.id,
+                message=f"Critical work order {new_status.lower()}: {work_order.maintenance_log.description[:50]}..."
+            )
+            db.session.add(notification)
+            db.session.commit()
+            flash(f'A critical work order has been {new_status.lower()}!', 'info')
+
         return jsonify({'success': True})
     return jsonify({'success': False}), 404
 
@@ -155,7 +181,15 @@ def filtered_work_orders():
             'assigned_to': order.assigned_to,
             'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d'),
             'notes': order.notes,
-            'priority': order.priority
+            'priority': order.priority,
+            'is_critical': order.is_critical
         })
 
     return jsonify(work_orders_data)
+
+@app.route('/mark_notification_as_read/<int:notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    notification.is_read = True
+    db.session.commit()
+    return jsonify({'success': True})
