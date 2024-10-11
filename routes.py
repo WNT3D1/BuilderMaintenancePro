@@ -1,14 +1,17 @@
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file
 from app import app, db
-from models import Company, MaintenanceLog, WorkOrder, Notification
-from forms import MaintenanceLogForm, WorkOrderForm, CompanySetupForm
+from models import Company, MaintenanceLog, WorkOrder, Notification, User
+from forms import MaintenanceLogForm, WorkOrderForm, CompanySetupForm, LoginForm, RegistrationForm
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, and_
 import csv
 import io
 from fpdf import FPDF
+from flask_login import login_user, login_required, logout_user, current_user
 
 @app.route('/')
+@app.route('/dashboard')
+@login_required
 def dashboard():
     pending_count = WorkOrder.query.filter_by(status='Pending').count()
     in_progress_count = WorkOrder.query.filter_by(status='In Progress').count()
@@ -26,6 +29,7 @@ def dashboard():
                            unread_notifications=unread_notifications)
 
 @app.route('/maintenance_log', methods=['GET', 'POST'])
+@login_required
 def maintenance_log():
     form = MaintenanceLogForm()
     if form.validate_on_submit():
@@ -33,10 +37,12 @@ def maintenance_log():
         form.populate_obj(new_log)
         db.session.add(new_log)
         db.session.commit()
+        flash('Maintenance log added successfully', 'success')
         return redirect(url_for('dashboard'))
     return render_template('maintenance_log.html', form=form)
 
 @app.route('/work_order', methods=['GET', 'POST'])
+@login_required
 def work_order():
     form = WorkOrderForm()
     if form.validate_on_submit():
@@ -46,23 +52,27 @@ def work_order():
         db.session.commit()
 
         if new_order.is_critical:
-            notification = Notification()
-            notification.work_order_id = new_order.id
-            notification.message = f"Critical work order created: {new_order.maintenance_log.description[:50]}..."
+            notification = Notification(
+                work_order_id=new_order.id,
+                message=f"Critical work order created: {new_order.maintenance_log.description[:50]}..."
+            )
             db.session.add(notification)
             db.session.commit()
             flash('A critical work order has been created!', 'warning')
 
+        flash('Work order created successfully', 'success')
         return redirect(url_for('dashboard'))
     maintenance_logs = MaintenanceLog.query.all()
     return render_template('work_order.html', form=form, maintenance_logs=maintenance_logs)
 
 @app.route('/schedule')
+@login_required
 def schedule():
     work_orders = WorkOrder.query.all()
     return render_template('schedule.html', work_orders=work_orders)
 
 @app.route('/update_work_order_status', methods=['POST'])
+@login_required
 def update_work_order_status():
     work_order_id = request.form.get('work_order_id')
     new_status = request.form.get('new_status')
@@ -74,9 +84,10 @@ def update_work_order_status():
         db.session.commit()
 
         if work_order.is_critical and new_status in ['In Progress', 'Completed']:
-            notification = Notification()
-            notification.work_order_id = work_order.id
-            notification.message = f"Critical work order {new_status.lower()}: {work_order.maintenance_log.description[:50]}..."
+            notification = Notification(
+                work_order_id=work_order.id,
+                message=f"Critical work order {new_status.lower()}: {work_order.maintenance_log.description[:50]}..."
+            )
             db.session.add(notification)
             db.session.commit()
             flash(f'A critical work order has been {new_status.lower()}!', 'info')
@@ -85,6 +96,7 @@ def update_work_order_status():
     return jsonify({'success': False}), 404
 
 @app.route('/company_setup', methods=['GET', 'POST'])
+@login_required
 def company_setup():
     company = Company.query.first()
     form = CompanySetupForm(obj=company)
@@ -94,34 +106,29 @@ def company_setup():
         form.populate_obj(company)
         db.session.add(company)
         db.session.commit()
+        flash('Company information updated successfully', 'success')
         return redirect(url_for('dashboard'))
     return render_template('company_setup.html', form=form)
 
 @app.route('/reports')
+@login_required
 def reports():
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    maintenance_logs = MaintenanceLog.query.filter(MaintenanceLog.created_at >= thirty_days_ago).all()
-    work_orders = WorkOrder.query.filter(WorkOrder.created_at >= thirty_days_ago).all()
-
-    total_logs = len(maintenance_logs)
-    total_orders = len(work_orders)
-    completed_orders = sum(1 for wo in work_orders if wo.status == 'Completed')
-    completion_rate = (completed_orders / total_orders * 100) if total_orders > 0 else 0
-
-    return render_template('reports.html', 
-                           maintenance_logs=maintenance_logs, 
-                           work_orders=work_orders,
-                           total_logs=total_logs,
-                           total_orders=total_orders,
-                           completed_orders=completed_orders,
-                           completion_rate=completion_rate)
+    maintenance_classes = db.session.query(MaintenanceLog.maintenance_class).distinct().all()
+    maintenance_classes = [mc[0] for mc in maintenance_classes]
+    priorities = db.session.query(WorkOrder.priority).distinct().all()
+    priorities = [p[0] for p in priorities]
+    return render_template('reports.html', maintenance_classes=maintenance_classes, priorities=priorities)
 
 @app.route('/filtered_reports')
+@login_required
 def filtered_reports():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    maintenance_class = request.args.get('maintenance_class')
-    priority = request.args.get('priority')
+    maintenance_class = request.args.getlist('maintenance_class')
+    priority = request.args.getlist('priority')
+    status = request.args.getlist('status')
+    assigned_to = request.args.get('assigned_to')
+    critical_only = request.args.get('critical_only')
 
     maintenance_logs_query = MaintenanceLog.query
     work_orders_query = WorkOrder.query
@@ -137,10 +144,21 @@ def filtered_reports():
         work_orders_query = work_orders_query.filter(WorkOrder.scheduled_date <= end_date)
 
     if maintenance_class:
-        maintenance_logs_query = maintenance_logs_query.filter(MaintenanceLog.maintenance_class == maintenance_class)
+        maintenance_logs_query = maintenance_logs_query.filter(MaintenanceLog.maintenance_class.in_(maintenance_class))
 
     if priority:
-        work_orders_query = work_orders_query.filter(WorkOrder.priority == priority)
+        work_orders_query = work_orders_query.filter(WorkOrder.priority.in_(priority))
+
+    if status:
+        work_orders_query = work_orders_query.filter(WorkOrder.status.in_(status))
+
+    if assigned_to:
+        work_orders_query = work_orders_query.filter(WorkOrder.assigned_to.ilike(f"%{assigned_to}%"))
+
+    if critical_only == 'true':
+        work_orders_query = work_orders_query.filter(WorkOrder.is_critical == True)
+    elif critical_only == 'false':
+        work_orders_query = work_orders_query.filter(WorkOrder.is_critical == False)
 
     maintenance_logs = maintenance_logs_query.all()
     work_orders = work_orders_query.all()
@@ -155,7 +173,8 @@ def filtered_reports():
             {
                 'date': log.date.strftime('%Y-%m-%d'),
                 'lot_number': log.lot_number,
-                'maintenance_class': log.maintenance_class
+                'maintenance_class': log.maintenance_class,
+                'description': log.description[:50] + '...' if len(log.description) > 50 else log.description
             } for log in maintenance_logs
         ],
         'work_orders': [
@@ -163,7 +182,9 @@ def filtered_reports():
                 'id': order.id,
                 'status': order.status,
                 'priority': order.priority,
-                'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d')
+                'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d'),
+                'assigned_to': order.assigned_to,
+                'is_critical': order.is_critical
             } for order in work_orders
         ],
         'total_logs': total_logs,
@@ -173,6 +194,7 @@ def filtered_reports():
     })
 
 @app.route('/export_report/<report_type>/<format>')
+@login_required
 def export_report(report_type, format):
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     
@@ -246,51 +268,45 @@ def export_pdf(data, filename, headers, report_type):
                      download_name=filename,
                      as_attachment=True)
 
-@app.route('/filtered_work_orders')
-def filtered_work_orders():
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    status = request.args.get('status')
-    priority = request.args.get('priority')
-    sort_by = request.args.get('sort_by', 'scheduled_date')
-    sort_order = request.args.get('sort_order', 'asc')
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user)
+            flash('Logged in successfully.', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('dashboard'))
+        else:
+            flash('Invalid username or password.', 'danger')
+    return render_template('login.html', form=form)
 
-    query = WorkOrder.query
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Your account has been created! You are now able to log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('signup.html', form=form)
 
-    if start_date:
-        query = query.filter(WorkOrder.scheduled_date >= datetime.strptime(start_date, '%Y-%m-%d'))
-    if end_date:
-        query = query.filter(WorkOrder.scheduled_date <= datetime.strptime(end_date, '%Y-%m-%d'))
-    if status:
-        query = query.filter(WorkOrder.status == status)
-    if priority:
-        query = query.filter(WorkOrder.priority == priority)
-
-    if sort_by == 'scheduled_date':
-        query = query.order_by(WorkOrder.scheduled_date.asc() if sort_order == 'asc' else WorkOrder.scheduled_date.desc())
-    elif sort_by == 'status':
-        query = query.order_by(WorkOrder.status.asc() if sort_order == 'asc' else WorkOrder.status.desc())
-    elif sort_by == 'priority':
-        query = query.order_by(WorkOrder.priority.asc() if sort_order == 'asc' else WorkOrder.priority.desc())
-
-    filtered_orders = query.all()
-
-    work_orders_data = []
-    for order in filtered_orders:
-        work_orders_data.append({
-            'id': order.id,
-            'maintenance_log_id': order.maintenance_log_id,
-            'status': order.status,
-            'assigned_to': order.assigned_to,
-            'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d'),
-            'notes': order.notes,
-            'priority': order.priority,
-            'is_critical': order.is_critical
-        })
-
-    return jsonify(work_orders_data)
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
 
 @app.route('/mark_notification_as_read/<int:notification_id>', methods=['POST'])
+@login_required
 def mark_notification_as_read(notification_id):
     notification = Notification.query.get_or_404(notification_id)
     notification.is_read = True

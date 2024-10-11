@@ -1,5 +1,7 @@
 from app import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -12,7 +14,7 @@ class MaintenanceLog(db.Model):
     date = db.Column(db.Date, nullable=False)
     lot_number = db.Column(db.String(50), nullable=False)
     contact_details = db.Column(db.String(255), nullable=False)
-    maintenance_class = db.Column(db.String(50), nullable=False)
+    maintenance_class = db.Column(db.String(20), nullable=False)
     description = db.Column(db.Text, nullable=False)
     allocation = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -25,7 +27,7 @@ class WorkOrder(db.Model):
     scheduled_date = db.Column(db.Date)
     completed_date = db.Column(db.Date)
     notes = db.Column(db.Text)
-    priority = db.Column(db.String(20), default='Medium')  # Added priority field
+    priority = db.Column(db.String(20), default='Medium')
     is_critical = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -40,3 +42,16 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     work_order = db.relationship('WorkOrder', backref=db.backref('notifications', lazy=True))
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)

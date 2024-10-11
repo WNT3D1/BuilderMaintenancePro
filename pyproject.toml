@@ -12,4 +12,5 @@ dependencies = [
     "flask-weasyprint>=1.1.0",
     "fpdf>=1.7.2",
     "flask-migrate>=4.0.7",
+    "flask-login>=0.6.3",
 ]

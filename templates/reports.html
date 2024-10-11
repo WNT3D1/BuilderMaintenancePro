@@ -19,24 +19,43 @@
             </div>
             <div class="col-md-3">
                 <label for="maintenance_class" class="form-label">Maintenance Class</label>
-                <select class="form-select" id="maintenance_class" name="maintenance_class">
-                    <option value="">All</option>
-                    <option value="3MTR">3MTR</option>
-                    <option value="IAS">IAS</option>
-                    <option value="Supplier">Supplier</option>
+                <select class="form-select" id="maintenance_class" name="maintenance_class" multiple>
+                    {% for mc in maintenance_classes %}
+                    <option value="{{ mc }}">{{ mc }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-3">
                 <label for="priority" class="form-label">Priority</label>
-                <select class="form-select" id="priority" name="priority">
+                <select class="form-select" id="priority" name="priority" multiple>
+                    {% for p in priorities %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status" multiple>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="assigned_to" class="form-label">Assigned To</label>
+                <input type="text" class="form-control" id="assigned_to" name="assigned_to">
+            </div>
+            <div class="col-md-3">
+                <label for="critical_only" class="form-label">Critical Tasks Only</label>
+                <select class="form-select" id="critical_only" name="critical_only">
                     <option value="">All</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
                 </select>
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
             </div>
         </form>
     </div>
@@ -47,7 +66,7 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Maintenance Logs</h5>
-                <p>Total Logs: <span id="total-logs">{{ total_logs }}</span></p>
+                <p>Total Logs: <span id="total-logs">0</span></p>
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('export_report', report_type='maintenance_logs', format='csv') }}" class="btn btn-primary">Export CSV</a>
                     <a href="{{ url_for('export_report', report_type='maintenance_logs', format='pdf') }}" class="btn btn-secondary">Export PDF</a>
@@ -58,16 +77,10 @@
                             <th>Date</th>
                             <th>Lot Number</th>
                             <th>Maintenance Class</th>
+                            <th>Description</th>
                         </tr>
                     </thead>
                     <tbody id="maintenance-logs-table">
-                        {% for log in maintenance_logs %}
-                        <tr>
-                            <td>{{ log.date }}</td>
-                            <td>{{ log.lot_number }}</td>
-                            <td>{{ log.maintenance_class }}</td>
-                        </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -77,9 +90,9 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Work Orders</h5>
-                <p>Total Orders: <span id="total-orders">{{ total_orders }}</span></p>
-                <p>Completed Orders: <span id="completed-orders">{{ completed_orders }}</span></p>
-                <p>Completion Rate: <span id="completion-rate">{{ "%.2f"|format(completion_rate) }}</span>%</p>
+                <p>Total Orders: <span id="total-orders">0</span></p>
+                <p>Completed Orders: <span id="completed-orders">0</span></p>
+                <p>Completion Rate: <span id="completion-rate">0</span>%</p>
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('export_report', report_type='work_orders', format='csv') }}" class="btn btn-primary">Export CSV</a>
                     <a href="{{ url_for('export_report', report_type='work_orders', format='pdf') }}" class="btn btn-secondary">Export PDF</a>
@@ -91,17 +104,11 @@
                             <th>Status</th>
                             <th>Priority</th>
                             <th>Scheduled Date</th>
+                            <th>Assigned To</th>
+                            <th>Critical</th>
                         </tr>
                     </thead>
                     <tbody id="work-orders-table">
-                        {% for order in work_orders %}
-                        <tr>
-                            <td>{{ order.id }}</td>
-                            <td>{{ order.status }}</td>
-                            <td>{{ order.priority }}</td>
-                            <td>{{ order.scheduled_date }}</td>
-                        </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -111,14 +118,31 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const filterForm = document.getElementById('filter-form');
+    const resetFiltersBtn = document.getElementById('reset-filters');
     
+    // Initialize Select2 for multiple select inputs
+    $('#maintenance_class, #priority, #status').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+
     filterForm.addEventListener('submit', function(event) {
         event.preventDefault();
         fetchFilteredReports();
     });
+
+    resetFiltersBtn.addEventListener('click', function() {
+        filterForm.reset();
+        $('#maintenance_class, #priority, #status').val(null).trigger('change');
+        fetchFilteredReports();
+    });
+
+    // Initial load of reports
+    fetchFilteredReports();
 });
 
 function fetchFilteredReports() {
@@ -145,6 +169,7 @@ function updateReportTables(data) {
             <td>${log.date}</td>
             <td>${log.lot_number}</td>
             <td>${log.maintenance_class}</td>
+            <td>${log.description}</td>
         </tr>`;
         maintenanceLogsTable.innerHTML += row;
     });
@@ -158,6 +183,8 @@ function updateReportTables(data) {
             <td>${order.status}</td>
             <td>${order.priority}</td>
             <td>${order.scheduled_date}</td>
+            <td>${order.assigned_to}</td>
+            <td>${order.is_critical ? 'Yes' : 'No'}</td>
         </tr>`;
         workOrdersTable.innerHTML += row;
     });
