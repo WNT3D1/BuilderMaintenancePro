@@ -42,8 +42,17 @@ function createWorkOrderChart(data) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: 10
+                        }
+                    }
                 }
+            },
+            layout: {
+                padding: 10
             }
         }
     });
@@ -73,10 +82,31 @@ function createCompletionTrendChart(data) {
             },
             scales: {
                 x: {
-                    display: false
+                    display: true,
+                    ticks: {
+                        maxTicksLimit: 5,
+                        maxRotation: 0,
+                        font: {
+                            size: 10
+                        }
+                    }
                 },
                 y: {
-                    display: false
+                    display: true,
+                    ticks: {
+                        beginAtZero: true,
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    radius: 0
+                },
+                line: {
+                    tension: 0.4
                 }
             }
         }
