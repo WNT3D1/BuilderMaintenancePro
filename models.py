@@ -18,36 +18,32 @@ class MaintenanceLog(db.Model):
     description = db.Column(db.Text, nullable=False)
     allocation = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    work_orders = db.relationship('WorkOrder', backref='maintenance_log', lazy=True)
 
 class WorkOrder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     maintenance_log_id = db.Column(db.Integer, db.ForeignKey('maintenance_log.id'), nullable=False)
-    status = db.Column(db.String(20), default='Pending')
-    assigned_to = db.Column(db.String(100))
-    scheduled_date = db.Column(db.Date)
+    status = db.Column(db.String(20), nullable=False)
+    assigned_to = db.Column(db.String(100), nullable=False)
+    scheduled_date = db.Column(db.Date, nullable=False)
     completed_date = db.Column(db.Date)
     notes = db.Column(db.Text)
-    priority = db.Column(db.String(20), default='Medium')
+    priority = db.Column(db.String(20), nullable=False)
     is_critical = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    maintenance_log = db.relationship('MaintenanceLog', backref=db.backref('work_orders', lazy=True))
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     work_order_id = db.Column(db.Integer, db.ForeignKey('work_order.id'), nullable=False)
-    message = db.Column(db.Text, nullable=False)
+    message = db.Column(db.String(255), nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    work_order = db.relationship('WorkOrder', backref=db.backref('notifications', lazy=True))
-
-class User(UserMixin, db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(256))  # Increased from 128 to 256
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
