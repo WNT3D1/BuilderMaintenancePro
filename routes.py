@@ -167,8 +167,8 @@ def export_csv(data, filename, headers):
     output.seek(0)
     return send_file(io.BytesIO(output.getvalue().encode()),
                      mimetype='text/csv',
-                     as_attachment=True,
-                     attachment_filename=filename)
+                     download_name=filename,
+                     as_attachment=True)
 
 def export_pdf(data, filename, headers, report_type):
     pdf = FPDF()
@@ -202,8 +202,8 @@ def export_pdf(data, filename, headers, report_type):
     pdf_output = pdf.output(dest='S').encode('latin-1')
     return send_file(io.BytesIO(pdf_output),
                      mimetype='application/pdf',
-                     as_attachment=True,
-                     attachment_filename=filename)
+                     download_name=filename,
+                     as_attachment=True)
 
 @app.route('/filtered_work_orders')
 def filtered_work_orders():
