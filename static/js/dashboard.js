@@ -35,19 +35,25 @@ function createWorkOrderChart(data) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
                     labels: {
-                        boxWidth: 10,
-                        padding: 5,
+                        boxWidth: 12,
+                        padding: 10,
                         font: {
-                            size: 10
+                            size: 12
                         }
                     }
                 }
             },
             layout: {
-                padding: 5
-            }
+                padding: {
+                    left: 5,
+                    right: 5,
+                    top: 5,
+                    bottom: 5
+                }
+            },
+            cutout: '70%'
         }
     });
 }
