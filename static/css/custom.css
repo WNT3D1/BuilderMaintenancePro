@@ -1,0 +1,21 @@
+/* Custom styles to complement Bootstrap */
+.dashboard-card {
+    height: 100%;
+}
+
+.logo-preview {
+    max-width: 200px;
+    max-height: 200px;
+}
+
+.status-pending {
+    color: var(--bs-warning);
+}
+
+.status-in-progress {
+    color: var(--bs-info);
+}
+
+.status-completed {
+    color: var(--bs-success);
+}

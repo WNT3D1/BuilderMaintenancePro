@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Builders Maintenance Management{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Work Orders</h5>
+                <p class="card-text display-4" id="total-work-orders">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Pending</h5>
+                <p class="card-text display-4 text-warning" id="pending-work-orders">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">In Progress</h5>
+                <p class="card-text display-4 text-info" id="in-progress-work-orders">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Completed</h5>
+                <p class="card-text display-4 text-success" id="completed-work-orders">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Work Order Status</h5>
+                <canvas id="work-order-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Completion Trend (Last 30 Days)</h5>
+                <canvas id="completion-trend-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h5 class="card-title">Recent Maintenance Logs</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Lot Number</th>
+                                <th>Maintenance Class</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td>{{ log.date }}</td>
+                                <td>{{ log.lot_number }}</td>
+                                <td>{{ log.maintenance_class }}</td>
+                                <td>{{ log.description[:50] }}{% if log.description|length > 50 %}...{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
