@@ -44,16 +44,16 @@ function createWorkOrderChart(data) {
                 legend: {
                     position: 'right',
                     labels: {
-                        boxWidth: 10,
-                        padding: 5,
+                        boxWidth: 8,
+                        padding: 3,
                         font: {
-                            size: 9
+                            size: 8
                         }
                     }
                 }
             },
             layout: {
-                padding: 5
+                padding: 2
             }
         }
     });
@@ -85,10 +85,10 @@ function createCompletionTrendChart(data) {
                 x: {
                     display: true,
                     ticks: {
-                        maxTicksLimit: 4,
+                        maxTicksLimit: 3,
                         maxRotation: 0,
                         font: {
-                            size: 9
+                            size: 8
                         }
                     }
                 },
@@ -97,7 +97,7 @@ function createCompletionTrendChart(data) {
                     ticks: {
                         beginAtZero: true,
                         font: {
-                            size: 9
+                            size: 8
                         }
                     }
                 }
@@ -107,7 +107,7 @@ function createCompletionTrendChart(data) {
                     radius: 0
                 },
                 line: {
-                    tension: 0.4
+                    tension: 0.3
                 }
             }
         }
