@@ -206,10 +206,12 @@ def export_csv(data, filename, headers):
             writer.writerow([item.id, item.status, item.assigned_to, item.scheduled_date, item.completed_date, item.priority, item.is_critical])
 
     output.seek(0)
-    return send_file(io.BytesIO(output.getvalue().encode()),
-                     mimetype='text/csv',
-                     download_name=filename,
-                     as_attachment=True)
+    return send_file(
+        io.BytesIO(output.getvalue().encode()),
+        mimetype='text/csv',
+        download_name=filename,
+        as_attachment=True
+    )
 
 def export_pdf(data, filename, headers, report_type):
     pdf = FPDF()
