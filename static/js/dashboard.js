@@ -39,7 +39,12 @@ function createWorkOrderChart(data) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
         }
     });
 }
@@ -72,8 +77,13 @@ function createCompletionTrendChart(data) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Number of Completed Work Orders'
+                        text: 'Completed Orders'
                     }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
                 }
             }
         }
