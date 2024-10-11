@@ -124,16 +124,15 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const filterForm = document.getElementById('filter-form');
-    const resetFiltersBtn = document.getElementById('reset-filters');
-    
-    // Initialize Select2 for multiple select inputs
+$(document).ready(function() {
     $('#maintenance_class, #priority, #status').select2({
         theme: 'bootstrap-5',
         width: '100%'
     });
 
+    const filterForm = document.getElementById('filter-form');
+    const resetFiltersBtn = document.getElementById('reset-filters');
+    
     filterForm.addEventListener('submit', function(event) {
         event.preventDefault();
         fetchFilteredReports();
