@@ -110,3 +110,52 @@ def reports():
                            total_orders=total_orders,
                            completed_orders=completed_orders,
                            completion_rate=completion_rate)
+
+@app.route('/filtered_work_orders')
+def filtered_work_orders():
+    # Get filter parameters
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    status = request.args.get('status')
+    priority = request.args.get('priority')
+    sort_by = request.args.get('sort_by', 'scheduled_date')
+    sort_order = request.args.get('sort_order', 'asc')
+
+    # Start with all work orders
+    query = WorkOrder.query
+
+    # Apply filters
+    if start_date:
+        query = query.filter(WorkOrder.scheduled_date >= datetime.strptime(start_date, '%Y-%m-%d'))
+    if end_date:
+        query = query.filter(WorkOrder.scheduled_date <= datetime.strptime(end_date, '%Y-%m-%d'))
+    if status:
+        query = query.filter(WorkOrder.status == status)
+    if priority:
+        query = query.filter(WorkOrder.priority == priority)
+
+    # Apply sorting
+    if sort_by == 'scheduled_date':
+        query = query.order_by(WorkOrder.scheduled_date.asc() if sort_order == 'asc' else WorkOrder.scheduled_date.desc())
+    elif sort_by == 'status':
+        query = query.order_by(WorkOrder.status.asc() if sort_order == 'asc' else WorkOrder.status.desc())
+    elif sort_by == 'priority':
+        query = query.order_by(WorkOrder.priority.asc() if sort_order == 'asc' else WorkOrder.priority.desc())
+
+    # Execute query
+    filtered_orders = query.all()
+
+    # Prepare data for JSON response
+    work_orders_data = []
+    for order in filtered_orders:
+        work_orders_data.append({
+            'id': order.id,
+            'maintenance_log_id': order.maintenance_log_id,
+            'status': order.status,
+            'assigned_to': order.assigned_to,
+            'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d'),
+            'notes': order.notes,
+            'priority': order.priority
+        })
+
+    return jsonify(work_orders_data)

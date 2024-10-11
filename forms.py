@@ -24,6 +24,11 @@ class WorkOrderForm(FlaskForm):
     assigned_to = StringField('Assigned To', validators=[DataRequired(), Length(max=100)])
     scheduled_date = DateField('Scheduled Date', validators=[DataRequired()])
     notes = TextAreaField('Notes')
+    priority = SelectField('Priority', choices=[
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High')
+    ], validators=[DataRequired()])
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])
