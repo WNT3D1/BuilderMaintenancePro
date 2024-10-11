@@ -9,4 +9,7 @@ dependencies = [
     "flask-sqlalchemy>=3.1.1",
     "psycopg2-binary>=2.9.9",
     "flask-wtf>=1.2.1",
+    "flask-weasyprint>=1.1.0",
+    "fpdf>=1.7.2",
+    "flask-migrate>=4.0.7",
 ]

@@ -25,7 +25,7 @@ class WorkOrder(db.Model):
     scheduled_date = db.Column(db.Date)
     completed_date = db.Column(db.Date)
     notes = db.Column(db.Text)
-    priority = db.Column(db.String(20), default='Medium')
+    priority = db.Column(db.String(20), default='Medium')  # Added priority field
     is_critical = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

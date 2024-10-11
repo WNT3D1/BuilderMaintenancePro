@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Builders Maintenance Management{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Reports</h1>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Maintenance Logs (Last 30 Days)</h5>
+                <p>Total Logs: {{ total_logs }}</p>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('export_report', report_type='maintenance_logs', format='csv') }}" class="btn btn-primary">Export CSV</a>
+                    <a href="{{ url_for('export_report', report_type='maintenance_logs', format='pdf') }}" class="btn btn-secondary">Export PDF</a>
+                </div>
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Lot Number</th>
+                            <th>Maintenance Class</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in maintenance_logs %}
+                        <tr>
+                            <td>{{ log.date }}</td>
+                            <td>{{ log.lot_number }}</td>
+                            <td>{{ log.maintenance_class }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Work Orders (Last 30 Days)</h5>
+                <p>Total Orders: {{ total_orders }}</p>
+                <p>Completed Orders: {{ completed_orders }}</p>
+                <p>Completion Rate: {{ "%.2f"|format(completion_rate) }}%</p>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('export_report', report_type='work_orders', format='csv') }}" class="btn btn-primary">Export CSV</a>
+                    <a href="{{ url_for('export_report', report_type='work_orders', format='pdf') }}" class="btn btn-secondary">Export PDF</a>
+                </div>
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Scheduled Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in work_orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.status }}</td>
+                            <td>{{ order.priority }}</td>
+                            <td>{{ order.scheduled_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

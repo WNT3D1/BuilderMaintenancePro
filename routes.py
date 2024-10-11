@@ -1,24 +1,20 @@
-from flask import render_template, request, redirect, url_for, jsonify, flash
+from flask import render_template, request, redirect, url_for, jsonify, flash, send_file
 from app import app, db
 from models import Company, MaintenanceLog, WorkOrder, Notification
 from forms import MaintenanceLogForm, WorkOrderForm, CompanySetupForm
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import func
+import csv
+import io
+from fpdf import FPDF
 
 @app.route('/')
 def dashboard():
-    # Get counts for different work order statuses
     pending_count = WorkOrder.query.filter_by(status='Pending').count()
     in_progress_count = WorkOrder.query.filter_by(status='In Progress').count()
     completed_count = WorkOrder.query.filter_by(status='Completed').count()
-
-    # Get recent maintenance logs
     recent_logs = MaintenanceLog.query.order_by(MaintenanceLog.created_at.desc()).limit(5).all()
-
-    # Get company info
     company = Company.query.first()
-
-    # Get unread notifications
     unread_notifications = Notification.query.filter_by(is_read=False).order_by(Notification.created_at.desc()).all()
 
     return render_template('dashboard.html', 
@@ -118,12 +114,10 @@ def company_setup():
 
 @app.route('/reports')
 def reports():
-    # Get maintenance logs and work orders for the last 30 days
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     maintenance_logs = MaintenanceLog.query.filter(MaintenanceLog.created_at >= thirty_days_ago).all()
     work_orders = WorkOrder.query.filter(WorkOrder.created_at >= thirty_days_ago).all()
 
-    # Calculate some statistics
     total_logs = len(maintenance_logs)
     total_orders = len(work_orders)
     completed_orders = sum(1 for wo in work_orders if wo.status == 'Completed')
@@ -137,9 +131,82 @@ def reports():
                            completed_orders=completed_orders,
                            completion_rate=completion_rate)
 
+@app.route('/export_report/<report_type>/<format>')
+def export_report(report_type, format):
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    
+    if report_type == 'maintenance_logs':
+        data = MaintenanceLog.query.filter(MaintenanceLog.created_at >= thirty_days_ago).all()
+        filename = f"maintenance_logs_report.{format}"
+        headers = ['Date', 'Lot Number', 'Contact Details', 'Maintenance Class', 'Description', 'Allocation']
+    elif report_type == 'work_orders':
+        data = WorkOrder.query.filter(WorkOrder.created_at >= thirty_days_ago).all()
+        filename = f"work_orders_report.{format}"
+        headers = ['ID', 'Status', 'Assigned To', 'Scheduled Date', 'Completed Date', 'Priority', 'Is Critical']
+    else:
+        return "Invalid report type", 400
+
+    if format == 'csv':
+        return export_csv(data, filename, headers)
+    elif format == 'pdf':
+        return export_pdf(data, filename, headers, report_type)
+    else:
+        return "Invalid format", 400
+
+def export_csv(data, filename, headers):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(headers)
+    for item in data:
+        if isinstance(item, MaintenanceLog):
+            writer.writerow([item.date, item.lot_number, item.contact_details, item.maintenance_class, item.description, item.allocation])
+        elif isinstance(item, WorkOrder):
+            writer.writerow([item.id, item.status, item.assigned_to, item.scheduled_date, item.completed_date, item.priority, item.is_critical])
+
+    output.seek(0)
+    return send_file(io.BytesIO(output.getvalue().encode()),
+                     mimetype='text/csv',
+                     as_attachment=True,
+                     attachment_filename=filename)
+
+def export_pdf(data, filename, headers, report_type):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    # Add headers
+    for header in headers:
+        pdf.cell(30, 10, header, 1)
+    pdf.ln()
+    
+    # Add data
+    for item in data:
+        if isinstance(item, MaintenanceLog):
+            pdf.cell(30, 10, str(item.date), 1)
+            pdf.cell(30, 10, item.lot_number, 1)
+            pdf.cell(30, 10, item.contact_details[:20], 1)
+            pdf.cell(30, 10, item.maintenance_class, 1)
+            pdf.cell(30, 10, item.description[:20], 1)
+            pdf.cell(30, 10, item.allocation, 1)
+        elif isinstance(item, WorkOrder):
+            pdf.cell(30, 10, str(item.id), 1)
+            pdf.cell(30, 10, item.status, 1)
+            pdf.cell(30, 10, item.assigned_to, 1)
+            pdf.cell(30, 10, str(item.scheduled_date), 1)
+            pdf.cell(30, 10, str(item.completed_date) if item.completed_date else '', 1)
+            pdf.cell(30, 10, item.priority, 1)
+            pdf.cell(30, 10, 'Yes' if item.is_critical else 'No', 1)
+        pdf.ln()
+
+    pdf_output = pdf.output(dest='S').encode('latin-1')
+    return send_file(io.BytesIO(pdf_output),
+                     mimetype='application/pdf',
+                     as_attachment=True,
+                     attachment_filename=filename)
+
 @app.route('/filtered_work_orders')
 def filtered_work_orders():
-    # Get filter parameters
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     status = request.args.get('status')
@@ -147,10 +214,8 @@ def filtered_work_orders():
     sort_by = request.args.get('sort_by', 'scheduled_date')
     sort_order = request.args.get('sort_order', 'asc')
 
-    # Start with all work orders
     query = WorkOrder.query
 
-    # Apply filters
     if start_date:
         query = query.filter(WorkOrder.scheduled_date >= datetime.strptime(start_date, '%Y-%m-%d'))
     if end_date:
@@ -160,7 +225,6 @@ def filtered_work_orders():
     if priority:
         query = query.filter(WorkOrder.priority == priority)
 
-    # Apply sorting
     if sort_by == 'scheduled_date':
         query = query.order_by(WorkOrder.scheduled_date.asc() if sort_order == 'asc' else WorkOrder.scheduled_date.desc())
     elif sort_by == 'status':
@@ -168,10 +232,8 @@ def filtered_work_orders():
     elif sort_by == 'priority':
         query = query.order_by(WorkOrder.priority.asc() if sort_order == 'asc' else WorkOrder.priority.desc())
 
-    # Execute query
     filtered_orders = query.all()
 
-    # Prepare data for JSON response
     work_orders_data = []
     for order in filtered_orders:
         work_orders_data.append({
