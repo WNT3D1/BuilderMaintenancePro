@@ -312,3 +312,41 @@ def mark_notification_as_read(notification_id):
     notification.is_read = True
     db.session.commit()
     return jsonify({'success': True})
+
+@app.route('/api/work_order_stats')
+@login_required
+def work_order_stats():
+    pending_count = WorkOrder.query.filter_by(status='Pending').count()
+    in_progress_count = WorkOrder.query.filter_by(status='In Progress').count()
+    completed_count = WorkOrder.query.filter_by(status='Completed').count()
+    total_count = pending_count + in_progress_count + completed_count
+
+    return jsonify({
+        'total': total_count,
+        'pending': pending_count,
+        'in_progress': in_progress_count,
+        'completed': completed_count
+    })
+
+@app.route('/api/work_order_completion_trend')
+@login_required
+def work_order_completion_trend():
+    end_date = datetime.utcnow().date()
+    start_date = end_date - timedelta(days=30)
+    
+    completed_orders = WorkOrder.query.filter(
+        WorkOrder.status == 'Completed',
+        WorkOrder.completed_date >= start_date,
+        WorkOrder.completed_date <= end_date
+    ).with_entities(
+        func.date(WorkOrder.completed_date).label('date'),
+        func.count().label('count')
+    ).group_by(func.date(WorkOrder.completed_date)).all()
+    
+    date_range = [start_date + timedelta(days=i) for i in range(31)]
+    trend_data = {date: 0 for date in date_range}
+    
+    for order in completed_orders:
+        trend_data[order.date] = order.count
+    
+    return jsonify([{'date': date.strftime('%Y-%m-%d'), 'count': count} for date, count in trend_data.items()])
