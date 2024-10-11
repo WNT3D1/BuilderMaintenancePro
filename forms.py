@@ -7,9 +7,9 @@ class MaintenanceLogForm(FlaskForm):
     lot_number = StringField('Lot Number', validators=[DataRequired(), Length(max=50)])
     contact_details = StringField('Contact Details', validators=[DataRequired(), Length(max=255)])
     maintenance_class = SelectField('Maintenance Class', choices=[
-        ('Routine', 'Routine'),
-        ('Preventive', 'Preventive'),
-        ('Emergency', 'Emergency')
+        ('3MTR', '3MTR'),
+        ('IAS', 'IAS'),
+        ('Supplier', 'Supplier')
     ], validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
     allocation = StringField('Allocation', validators=[DataRequired(), Length(max=100)])
