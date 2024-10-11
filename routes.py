@@ -29,14 +29,8 @@ def dashboard():
 def maintenance_log():
     form = MaintenanceLogForm()
     if form.validate_on_submit():
-        new_log = MaintenanceLog(
-            date=form.date.data,
-            lot_number=form.lot_number.data,
-            contact_details=form.contact_details.data,
-            maintenance_class=form.maintenance_class.data,
-            description=form.description.data,
-            allocation=form.allocation.data
-        )
+        new_log = MaintenanceLog()
+        form.populate_obj(new_log)
         db.session.add(new_log)
         db.session.commit()
         return redirect(url_for('dashboard'))
@@ -46,23 +40,15 @@ def maintenance_log():
 def work_order():
     form = WorkOrderForm()
     if form.validate_on_submit():
-        new_order = WorkOrder(
-            maintenance_log_id=form.maintenance_log_id.data,
-            status=form.status.data,
-            assigned_to=form.assigned_to.data,
-            scheduled_date=form.scheduled_date.data,
-            notes=form.notes.data,
-            priority=form.priority.data,
-            is_critical=form.is_critical.data
-        )
+        new_order = WorkOrder()
+        form.populate_obj(new_order)
         db.session.add(new_order)
         db.session.commit()
 
         if new_order.is_critical:
-            notification = Notification(
-                work_order_id=new_order.id,
-                message=f"Critical work order created: {new_order.maintenance_log.description[:50]}..."
-            )
+            notification = Notification()
+            notification.work_order_id = new_order.id
+            notification.message = f"Critical work order created: {new_order.maintenance_log.description[:50]}..."
             db.session.add(notification)
             db.session.commit()
             flash('A critical work order has been created!', 'warning')
@@ -88,10 +74,9 @@ def update_work_order_status():
         db.session.commit()
 
         if work_order.is_critical and new_status in ['In Progress', 'Completed']:
-            notification = Notification(
-                work_order_id=work_order.id,
-                message=f"Critical work order {new_status.lower()}: {work_order.maintenance_log.description[:50]}..."
-            )
+            notification = Notification()
+            notification.work_order_id = work_order.id
+            notification.message = f"Critical work order {new_status.lower()}: {work_order.maintenance_log.description[:50]}..."
             db.session.add(notification)
             db.session.commit()
             flash(f'A critical work order has been {new_status.lower()}!', 'info')
@@ -131,6 +116,62 @@ def reports():
                            completed_orders=completed_orders,
                            completion_rate=completion_rate)
 
+@app.route('/filtered_reports')
+def filtered_reports():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    maintenance_class = request.args.get('maintenance_class')
+    priority = request.args.get('priority')
+
+    maintenance_logs_query = MaintenanceLog.query
+    work_orders_query = WorkOrder.query
+
+    if start_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        maintenance_logs_query = maintenance_logs_query.filter(MaintenanceLog.date >= start_date)
+        work_orders_query = work_orders_query.filter(WorkOrder.scheduled_date >= start_date)
+
+    if end_date:
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        maintenance_logs_query = maintenance_logs_query.filter(MaintenanceLog.date <= end_date)
+        work_orders_query = work_orders_query.filter(WorkOrder.scheduled_date <= end_date)
+
+    if maintenance_class:
+        maintenance_logs_query = maintenance_logs_query.filter(MaintenanceLog.maintenance_class == maintenance_class)
+
+    if priority:
+        work_orders_query = work_orders_query.filter(WorkOrder.priority == priority)
+
+    maintenance_logs = maintenance_logs_query.all()
+    work_orders = work_orders_query.all()
+
+    total_logs = len(maintenance_logs)
+    total_orders = len(work_orders)
+    completed_orders = sum(1 for wo in work_orders if wo.status == 'Completed')
+    completion_rate = (completed_orders / total_orders * 100) if total_orders > 0 else 0
+
+    return jsonify({
+        'maintenance_logs': [
+            {
+                'date': log.date.strftime('%Y-%m-%d'),
+                'lot_number': log.lot_number,
+                'maintenance_class': log.maintenance_class
+            } for log in maintenance_logs
+        ],
+        'work_orders': [
+            {
+                'id': order.id,
+                'status': order.status,
+                'priority': order.priority,
+                'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d')
+            } for order in work_orders
+        ],
+        'total_logs': total_logs,
+        'total_orders': total_orders,
+        'completed_orders': completed_orders,
+        'completion_rate': completion_rate
+    })
+
 @app.route('/export_report/<report_type>/<format>')
 def export_report(report_type, format):
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -167,19 +208,18 @@ def export_csv(data, filename, headers):
     output.seek(0)
     return send_file(io.BytesIO(output.getvalue().encode()),
                      mimetype='text/csv',
-                     download_name=filename)
+                     download_name=filename,
+                     as_attachment=True)
 
 def export_pdf(data, filename, headers, report_type):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     
-    # Add headers
     for header in headers:
         pdf.cell(30, 10, header, 1)
     pdf.ln()
     
-    # Add data
     for item in data:
         if isinstance(item, MaintenanceLog):
             pdf.cell(30, 10, str(item.date), 1)
@@ -198,7 +238,7 @@ def export_pdf(data, filename, headers, report_type):
             pdf.cell(30, 10, 'Yes' if item.is_critical else 'No', 1)
         pdf.ln()
 
-    pdf_output = pdf.output(dest='S').encode('latin-1')
+    pdf_output = pdf.output(dest='S')
     return send_file(io.BytesIO(pdf_output),
                      mimetype='application/pdf',
                      download_name=filename,

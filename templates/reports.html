@@ -5,12 +5,49 @@
 {% block content %}
 <h1 class="mb-4">Reports</h1>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Advanced Filtering</h5>
+        <form id="filter-form" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date">
+            </div>
+            <div class="col-md-3">
+                <label for="maintenance_class" class="form-label">Maintenance Class</label>
+                <select class="form-select" id="maintenance_class" name="maintenance_class">
+                    <option value="">All</option>
+                    <option value="3MTR">3MTR</option>
+                    <option value="IAS">IAS</option>
+                    <option value="Supplier">Supplier</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="priority" class="form-label">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="">All</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Maintenance Logs (Last 30 Days)</h5>
-                <p>Total Logs: {{ total_logs }}</p>
+                <h5 class="card-title">Maintenance Logs</h5>
+                <p>Total Logs: <span id="total-logs">{{ total_logs }}</span></p>
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('export_report', report_type='maintenance_logs', format='csv') }}" class="btn btn-primary">Export CSV</a>
                     <a href="{{ url_for('export_report', report_type='maintenance_logs', format='pdf') }}" class="btn btn-secondary">Export PDF</a>
@@ -23,7 +60,7 @@
                             <th>Maintenance Class</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="maintenance-logs-table">
                         {% for log in maintenance_logs %}
                         <tr>
                             <td>{{ log.date }}</td>
@@ -39,10 +76,10 @@
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Work Orders (Last 30 Days)</h5>
-                <p>Total Orders: {{ total_orders }}</p>
-                <p>Completed Orders: {{ completed_orders }}</p>
-                <p>Completion Rate: {{ "%.2f"|format(completion_rate) }}%</p>
+                <h5 class="card-title">Work Orders</h5>
+                <p>Total Orders: <span id="total-orders">{{ total_orders }}</span></p>
+                <p>Completed Orders: <span id="completed-orders">{{ completed_orders }}</span></p>
+                <p>Completion Rate: <span id="completion-rate">{{ "%.2f"|format(completion_rate) }}</span>%</p>
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('export_report', report_type='work_orders', format='csv') }}" class="btn btn-primary">Export CSV</a>
                     <a href="{{ url_for('export_report', report_type='work_orders', format='pdf') }}" class="btn btn-secondary">Export PDF</a>
@@ -56,7 +93,7 @@
                             <th>Scheduled Date</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="work-orders-table">
                         {% for order in work_orders %}
                         <tr>
                             <td>{{ order.id }}</td>
@@ -71,4 +108,65 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filter-form');
+    
+    filterForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        fetchFilteredReports();
+    });
+});
+
+function fetchFilteredReports() {
+    const filterForm = document.getElementById('filter-form');
+    const formData = new FormData(filterForm);
+    const queryString = new URLSearchParams(formData).toString();
+
+    fetch(`/filtered_reports?${queryString}`)
+        .then(response => response.json())
+        .then(data => {
+            updateReportTables(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function updateReportTables(data) {
+    // Update Maintenance Logs
+    const maintenanceLogsTable = document.getElementById('maintenance-logs-table');
+    maintenanceLogsTable.innerHTML = '';
+    data.maintenance_logs.forEach(log => {
+        const row = `<tr>
+            <td>${log.date}</td>
+            <td>${log.lot_number}</td>
+            <td>${log.maintenance_class}</td>
+        </tr>`;
+        maintenanceLogsTable.innerHTML += row;
+    });
+
+    // Update Work Orders
+    const workOrdersTable = document.getElementById('work-orders-table');
+    workOrdersTable.innerHTML = '';
+    data.work_orders.forEach(order => {
+        const row = `<tr>
+            <td>${order.id}</td>
+            <td>${order.status}</td>
+            <td>${order.priority}</td>
+            <td>${order.scheduled_date}</td>
+        </tr>`;
+        workOrdersTable.innerHTML += row;
+    });
+
+    // Update statistics
+    document.getElementById('total-logs').textContent = data.total_logs;
+    document.getElementById('total-orders').textContent = data.total_orders;
+    document.getElementById('completed-orders').textContent = data.completed_orders;
+    document.getElementById('completion-rate').textContent = data.completion_rate.toFixed(2);
+}
+</script>
 {% endblock %}
