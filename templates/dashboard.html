@@ -69,15 +69,7 @@
 </div>
 
 <div class="row g-1 mb-1">
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-body p-1">
-                <h5 class="card-title fs-6">Completion Trend (Last 30 Days)</h5>
-                <canvas id="completion-trend-chart" style="height: 150px;"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
+    <div class="col-md-12">
         <div class="card h-100">
             <div class="card-body p-1">
                 <h5 class="card-title fs-6">Recent Maintenance Logs</h5>
@@ -92,12 +84,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for log in recent_logs[:3] %}
+                            {% for log in recent_logs[:5] %}
                             <tr>
                                 <td class="small">{{ log.date }}</td>
                                 <td class="small">{{ log.lot_number }}</td>
                                 <td class="small">{{ log.maintenance_class }}</td>
-                                <td class="small">{{ log.description[:20] }}{% if log.description|length > 20 %}...{% endif %}</td>
+                                <td class="small">{{ log.description[:30] }}{% if log.description|length > 30 %}...{% endif %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

@@ -6,13 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateWorkOrderStats(data);
             createWorkOrderChart(data);
         });
-
-    // Fetch work order completion trend
-    fetch('/api/work_order_completion_trend')
-        .then(response => response.json())
-        .then(data => {
-            createCompletionTrendChart(data);
-        });
 });
 
 function updateWorkOrderStats(data) {
@@ -44,71 +37,16 @@ function createWorkOrderChart(data) {
                 legend: {
                     position: 'right',
                     labels: {
-                        boxWidth: 8,
-                        padding: 3,
+                        boxWidth: 10,
+                        padding: 5,
                         font: {
-                            size: 8
+                            size: 10
                         }
                     }
                 }
             },
             layout: {
-                padding: 2
-            }
-        }
-    });
-}
-
-function createCompletionTrendChart(data) {
-    const ctx = document.getElementById('completion-trend-chart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.map(item => item.date),
-            datasets: [{
-                label: 'Completed Work Orders',
-                data: data.map(item => item.count),
-                borderColor: 'rgba(40, 167, 69, 1)',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                x: {
-                    display: true,
-                    ticks: {
-                        maxTicksLimit: 3,
-                        maxRotation: 0,
-                        font: {
-                            size: 8
-                        }
-                    }
-                },
-                y: {
-                    display: true,
-                    ticks: {
-                        beginAtZero: true,
-                        font: {
-                            size: 8
-                        }
-                    }
-                }
-            },
-            elements: {
-                point: {
-                    radius: 0
-                },
-                line: {
-                    tension: 0.3
-                }
+                padding: 5
             }
         }
     });
