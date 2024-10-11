@@ -3,12 +3,12 @@
 {% block title %}Dashboard - Builders Maintenance Management{% endblock %}
 
 {% block content %}
-<h1 class="mb-3">Dashboard</h1>
+<h1 class="mb-2">Dashboard</h1>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      <div class="alert alert-{{ category }} alert-dismissible fade show py-2" role="alert">
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
@@ -17,13 +17,13 @@
 {% endwith %}
 
 {% if unread_notifications %}
-<div class="card mb-3">
-    <div class="card-header bg-warning text-dark">
+<div class="card mb-2">
+    <div class="card-header bg-warning text-dark py-2">
         <h5 class="mb-0">Critical Notifications</h5>
     </div>
     <ul class="list-group list-group-flush">
         {% for notification in unread_notifications %}
-        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
             {{ notification.message }}
             <button class="btn btn-sm btn-outline-secondary mark-as-read" data-notification-id="{{ notification.id }}">Mark as Read</button>
         </li>
@@ -32,27 +32,27 @@
 </div>
 {% endif %}
 
-<div class="row g-3 mb-3">
+<div class="row g-2 mb-2">
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-body">
+            <div class="card-body p-2">
                 <h5 class="card-title">Work Order Statistics</h5>
-                <div class="row g-2">
+                <div class="row g-1">
                     <div class="col-6 col-sm-3">
                         <p class="mb-0">Total</p>
-                        <p class="h5" id="total-work-orders">{{ pending_count + in_progress_count + completed_count }}</p>
+                        <p class="h6" id="total-work-orders">{{ pending_count + in_progress_count + completed_count }}</p>
                     </div>
                     <div class="col-6 col-sm-3">
                         <p class="mb-0">Pending</p>
-                        <p class="h5 text-warning" id="pending-work-orders">{{ pending_count }}</p>
+                        <p class="h6 text-warning" id="pending-work-orders">{{ pending_count }}</p>
                     </div>
                     <div class="col-6 col-sm-3">
                         <p class="mb-0">In Progress</p>
-                        <p class="h5 text-info" id="in-progress-work-orders">{{ in_progress_count }}</p>
+                        <p class="h6 text-info" id="in-progress-work-orders">{{ in_progress_count }}</p>
                     </div>
                     <div class="col-6 col-sm-3">
                         <p class="mb-0">Completed</p>
-                        <p class="h5 text-success" id="completed-work-orders">{{ completed_count }}</p>
+                        <p class="h6 text-success" id="completed-work-orders">{{ completed_count }}</p>
                     </div>
                 </div>
             </div>
@@ -60,29 +60,29 @@
     </div>
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-body">
+            <div class="card-body p-2">
                 <h5 class="card-title">Work Order Status</h5>
-                <canvas id="work-order-chart" style="height: 200px;"></canvas>
+                <canvas id="work-order-chart" style="height: 180px;"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
+<div class="row g-2 mb-2">
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-body">
+            <div class="card-body p-2">
                 <h5 class="card-title">Completion Trend (Last 30 Days)</h5>
-                <canvas id="completion-trend-chart" style="height: 200px;"></canvas>
+                <canvas id="completion-trend-chart" style="height: 180px;"></canvas>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card h-100">
-            <div class="card-body">
+            <div class="card-body p-2">
                 <h5 class="card-title">Recent Maintenance Logs</h5>
                 <div class="table-responsive">
-                    <table class="table table-sm table-striped">
+                    <table class="table table-sm table-striped mb-0">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -97,7 +97,7 @@
                                 <td>{{ log.date }}</td>
                                 <td>{{ log.lot_number }}</td>
                                 <td>{{ log.maintenance_class }}</td>
-                                <td>{{ log.description[:50] }}{% if log.description|length > 50 %}...{% endif %}</td>
+                                <td>{{ log.description[:30] }}{% if log.description|length > 30 %}...{% endif %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     this.closest('li').remove();
                     if (document.querySelectorAll('.mark-as-read').length === 0) {
-                        document.querySelector('.card.mb-3').remove();
+                        document.querySelector('.card.mb-2').remove();
                     }
                 }
             });

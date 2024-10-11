@@ -44,15 +44,16 @@ function createWorkOrderChart(data) {
                 legend: {
                     position: 'right',
                     labels: {
-                        boxWidth: 12,
+                        boxWidth: 10,
+                        padding: 5,
                         font: {
-                            size: 10
+                            size: 9
                         }
                     }
                 }
             },
             layout: {
-                padding: 10
+                padding: 5
             }
         }
     });
@@ -84,10 +85,10 @@ function createCompletionTrendChart(data) {
                 x: {
                     display: true,
                     ticks: {
-                        maxTicksLimit: 5,
+                        maxTicksLimit: 4,
                         maxRotation: 0,
                         font: {
-                            size: 10
+                            size: 9
                         }
                     }
                 },
@@ -96,7 +97,7 @@ function createCompletionTrendChart(data) {
                     ticks: {
                         beginAtZero: true,
                         font: {
-                            size: 10
+                            size: 9
                         }
                     }
                 }
