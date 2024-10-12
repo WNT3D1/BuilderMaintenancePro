@@ -194,7 +194,7 @@ def work_order_pdf(work_order_id):
             io.BytesIO(pdf_content),
             mimetype='application/pdf',
             as_attachment=True,
-            attachment_filename=f'work_order_{work_order_id}.pdf'
+            download_name=f'work_order_{work_order_id}.pdf'
         )
     else:
         flash('Work order not found', 'error')
