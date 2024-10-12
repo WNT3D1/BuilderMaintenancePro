@@ -35,6 +35,10 @@ class WorkOrderForm(FlaskForm):
         logging.info(f"Number of maintenance logs retrieved: {len(maintenance_logs)}")
         self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in maintenance_logs]
         logging.info(f"Maintenance log choices: {self.maintenance_log_id.choices}")
+        if not self.maintenance_log_id.choices:
+            logging.warning("No maintenance log choices available")
+        for log in maintenance_logs:
+            logging.info(f"Log ID: {log.id}, Date: {log.date}, Lot Number: {log.lot_number}")
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])

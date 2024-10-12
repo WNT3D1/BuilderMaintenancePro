@@ -59,6 +59,12 @@ def work_order():
         form = WorkOrderForm()
         logging.info(f"WorkOrderForm initialized with {len(form.maintenance_log_id.choices)} choices")
         
+        # Log all available maintenance logs
+        all_logs = MaintenanceLog.query.all()
+        logging.info(f"Total maintenance logs in database: {len(all_logs)}")
+        for log in all_logs:
+            logging.info(f"Log ID: {log.id}, Date: {log.date}, Lot Number: {log.lot_number}")
+        
         if form.validate_on_submit():
             new_order = WorkOrder(
                 maintenance_log_id=form.maintenance_log_id.data,
