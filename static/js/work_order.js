@@ -1,20 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('work-order-form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            if (validateForm()) {
+                this.submit();
+            }
+        });
+    }
+
     const filterForm = document.getElementById('filter-form');
-    const workOrdersTable = document.getElementById('work-orders-table');
-    
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        if (validateForm()) {
-            this.submit();
-        }
-    });
-    
-    filterForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        fetchFilteredWorkOrders();
-    });
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            fetchFilteredWorkOrders();
+        });
+    }
 
     // Initial load of work orders
     fetchFilteredWorkOrders();
@@ -38,47 +40,51 @@ function validateForm() {
 
 function fetchFilteredWorkOrders() {
     const filterForm = document.getElementById('filter-form');
-    const formData = new FormData(filterForm);
-    const queryString = new URLSearchParams(formData).toString();
+    if (filterForm) {
+        const formData = new FormData(filterForm);
+        const queryString = new URLSearchParams(formData).toString();
 
-    fetch(`/filtered_work_orders?${queryString}`)
-        .then(response => response.json())
-        .then(data => {
-            updateWorkOrdersTable(data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        fetch(`/filtered_work_orders?${queryString}`)
+            .then(response => response.json())
+            .then(data => {
+                updateWorkOrdersTable(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
 }
 
 function updateWorkOrdersTable(workOrders) {
     const tableBody = document.querySelector('#work-orders-table tbody');
-    tableBody.innerHTML = '';
+    if (tableBody) {
+        tableBody.innerHTML = '';
 
-    workOrders.forEach(order => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${order.id}</td>
-            <td>${order.maintenance_log_id}</td>
-            <td>${order.status}</td>
-            <td>${order.assigned_to}</td>
-            <td>${order.scheduled_date}</td>
-            <td>${order.priority}</td>
-            <td>${order.is_critical ? 'Yes' : 'No'}</td>
-            <td>
-                <button class="btn btn-sm btn-primary status-update-btn" data-work-order-id="${order.id}" data-status="In Progress">
-                    Start
-                </button>
-                <button class="btn btn-sm btn-success status-update-btn" data-work-order-id="${order.id}" data-status="Completed">
-                    Complete
-                </button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+        workOrders.forEach(order => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${order.id}</td>
+                <td>${order.maintenance_log_id}</td>
+                <td>${order.status}</td>
+                <td>${order.assigned_to}</td>
+                <td>${order.scheduled_date}</td>
+                <td>${order.priority}</td>
+                <td>${order.is_critical ? 'Yes' : 'No'}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary status-update-btn" data-work-order-id="${order.id}" data-status="In Progress">
+                        Start
+                    </button>
+                    <button class="btn btn-sm btn-success status-update-btn" data-work-order-id="${order.id}" data-status="Completed">
+                        Complete
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
 
-    // Re-attach event listeners for status update buttons
-    attachStatusUpdateListeners();
+        // Re-attach event listeners for status update buttons
+        attachStatusUpdateListeners();
+    }
 }
 
 function attachStatusUpdateListeners() {

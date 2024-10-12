@@ -167,3 +167,15 @@ def filtered_work_orders():
         'priority': order.priority,
         'is_critical': order.is_critical
     } for order in work_orders])
+
+@app.route('/create_test_user')
+def create_test_user():
+    try:
+        test_user = User(username='testuser', email='testuser@example.com')
+        test_user.set_password('testpassword')
+        db.session.add(test_user)
+        db.session.commit()
+        return jsonify({'message': 'Test user created successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
