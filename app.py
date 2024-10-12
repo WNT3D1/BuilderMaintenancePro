@@ -5,13 +5,17 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, current_user
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
+
+# Set the environment based on the FLASK_ENV variable
+app.config['ENV'] = os.environ.get('FLASK_ENV', 'production')
+app.config['DEBUG'] = app.config['ENV'] == 'development'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

@@ -16,4 +16,5 @@ dependencies = [
     "werkzeug==2.3.4",
     "sqlalchemy>=2.0.35",
     "wtforms>=3.1.2",
+    "gunicorn>=23.0.0",
 ]
