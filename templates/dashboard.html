@@ -16,13 +16,13 @@
   {% endif %}
 {% endwith %}
 
-{% if unread_notifications %}
+{% if notifications %}
 <div class="card mb-2">
     <div class="card-header bg-warning text-dark py-1">
         <h5 class="mb-0 fs-6">Critical Notifications</h5>
     </div>
     <ul class="list-group list-group-flush">
-        {% for notification in unread_notifications %}
+        {% for notification in notifications %}
         <li class="list-group-item d-flex justify-content-between align-items-center py-1">
             <small>{{ notification.message }}</small>
             <button class="btn btn-sm btn-outline-secondary mark-as-read" data-notification-id="{{ notification.id }}">Mark as Read</button>
@@ -33,35 +33,7 @@
 {% endif %}
 
 <div class="row g-2 mb-2">
-    <div class="col-md-12">
-        <div class="card h-100">
-            <div class="card-body p-2">
-                <h5 class="card-title fs-6">Work Order Statistics</h5>
-                <div class="row g-1">
-                    <div class="col-6 col-sm-3">
-                        <p class="mb-0 small">Total</p>
-                        <p class="h6" id="total-work-orders">{{ pending_count + in_progress_count + completed_count }}</p>
-                    </div>
-                    <div class="col-6 col-sm-3">
-                        <p class="mb-0 small">Pending</p>
-                        <p class="h6 text-warning" id="pending-work-orders">{{ pending_count }}</p>
-                    </div>
-                    <div class="col-6 col-sm-3">
-                        <p class="mb-0 small">In Progress</p>
-                        <p class="h6 text-info" id="in-progress-work-orders">{{ in_progress_count }}</p>
-                    </div>
-                    <div class="col-6 col-sm-3">
-                        <p class="mb-0 small">Completed</p>
-                        <p class="h6 text-success" id="completed-work-orders">{{ completed_count }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-2 mb-2">
-    <div class="col-md-12">
+    <div class="col-md-6">
         <div class="card h-100">
             <div class="card-body p-2">
                 <h5 class="card-title fs-6">Recent Maintenance Logs</h5>
@@ -76,12 +48,41 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for log in recent_logs[:5] %}
+                            {% for log in maintenance_logs %}
                             <tr>
                                 <td class="small">{{ log.date }}</td>
                                 <td class="small">{{ log.lot_number }}</td>
                                 <td class="small">{{ log.maintenance_class }}</td>
                                 <td class="small">{{ log.description[:30] }}{% if log.description|length > 30 %}...{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body p-2">
+                <h5 class="card-title fs-6">Recent Work Orders</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th class="small">Date</th>
+                                <th class="small">Status</th>
+                                <th class="small">Assigned To</th>
+                                <th class="small">Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in work_orders %}
+                            <tr>
+                                <td class="small">{{ order.scheduled_date }}</td>
+                                <td class="small">{{ order.status }}</td>
+                                <td class="small">{{ order.assigned_to }}</td>
+                                <td class="small">{{ order.priority }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

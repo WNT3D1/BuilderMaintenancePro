@@ -12,31 +12,24 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-@app.route('/work_order', methods=['GET', 'POST'])
+@app.route('/maintenance_log', methods=['GET', 'POST'])
 @login_required
-def work_order():
-    logging.info(f"User {current_user.username} accessing work_order route")
-    
-    maintenance_logs_count = MaintenanceLog.query.count()
-    logging.info(f"Number of MaintenanceLog entries: {maintenance_logs_count}")
-
-    if maintenance_logs_count == 0:
-        test_logs = [
-            MaintenanceLog(date=datetime.utcnow().date(), lot_number="LOT001", contact_details="John Doe", 
-                           maintenance_class="3MTR", description="Test maintenance log 1", allocation="Team A"),
-            MaintenanceLog(date=datetime.utcnow().date(), lot_number="LOT002", contact_details="Jane Smith", 
-                           maintenance_class="IAS", description="Test maintenance log 2", allocation="Team B"),
-        ]
-        db.session.add_all(test_logs)
-        db.session.commit()
-        logging.info("Added test MaintenanceLog entries")
-
-    form = WorkOrderForm()
-    logging.info(f"WorkOrderForm created with maintenance_log_id choices: {form.maintenance_log_id.choices}")
-    
+def maintenance_log():
+    form = MaintenanceLogForm()
     if form.validate_on_submit():
+        new_log = MaintenanceLog(
+            date=form.date.data,
+            lot_number=form.lot_number.data,
+            contact_details=form.contact_details.data,
+            maintenance_class=form.maintenance_class.data,
+            description=form.description.data,
+            allocation=form.allocation.data
+        )
+        db.session.add(new_log)
+        db.session.flush()  # This assigns an ID to new_log
+
         new_order = WorkOrder(
-            maintenance_log_id=form.maintenance_log_id.data,
+            maintenance_log_id=new_log.id,
             status=form.status.data,
             assigned_to=form.assigned_to.data,
             scheduled_date=form.scheduled_date.data,
@@ -45,26 +38,59 @@ def work_order():
             is_critical=form.is_critical.data
         )
         db.session.add(new_order)
-        db.session.commit()
 
         if new_order.is_critical:
             notification = Notification(
                 work_order_id=new_order.id,
-                message=f"Critical work order created: {new_order.maintenance_log.description[:50]}..."
+                message=f"Critical work order created: {new_log.description[:50]}..."
             )
             db.session.add(notification)
-            db.session.commit()
-            flash('A critical work order has been created!', 'warning')
 
-        flash('Work order created successfully', 'success')
+        db.session.commit()
+        flash('Maintenance log and work order created successfully', 'success')
         return redirect(url_for('dashboard'))
-    
-    if form.errors:
-        logging.error(f"Form validation errors: {form.errors}")
-    
-    return render_template('work_order.html', form=form)
 
-# Add other routes here...
+    return render_template('maintenance_log.html', form=form)
+
+@app.route('/work_order', methods=['GET', 'POST'])
+@login_required
+def work_order():
+    try:
+        form = WorkOrderForm()
+        logging.info(f"WorkOrderForm initialized with {len(form.maintenance_log_id.choices)} choices")
+        
+        if form.validate_on_submit():
+            new_order = WorkOrder(
+                maintenance_log_id=form.maintenance_log_id.data,
+                status=form.status.data,
+                assigned_to=form.assigned_to.data,
+                scheduled_date=form.scheduled_date.data,
+                priority=form.priority.data,
+                notes=form.notes.data,
+                is_critical=form.is_critical.data
+            )
+            db.session.add(new_order)
+
+            if new_order.is_critical:
+                notification = Notification(
+                    work_order_id=new_order.id,
+                    message=f"Critical work order created for maintenance log {new_order.maintenance_log_id}"
+                )
+                db.session.add(notification)
+
+            db.session.commit()
+            flash('Work order created successfully', 'success')
+            return redirect(url_for('dashboard'))
+
+        if request.method == 'POST' and not form.validate():
+            logging.error(f"Form validation errors: {form.errors}")
+            flash('There was an error creating the work order. Please check the form and try again.', 'danger')
+
+        return render_template('work_order.html', form=form)
+    except Exception as e:
+        logging.error(f"Error in work_order route: {str(e)}")
+        flash('An unexpected error occurred. Please try again later.', 'danger')
+        return redirect(url_for('dashboard'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -88,10 +114,21 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    maintenance_logs = MaintenanceLog.query.order_by(MaintenanceLog.date.desc()).limit(5).all()
+    work_orders = WorkOrder.query.order_by(WorkOrder.scheduled_date).limit(5).all()
+    notifications = Notification.query.filter_by(is_read=False).all()
+
+    return render_template('dashboard.html', 
+                           maintenance_logs=maintenance_logs, 
+                           work_orders=work_orders,
+                           notifications=notifications)
+
 @app.route('/filtered_work_orders')
 @login_required
 def filtered_work_orders():
-    # Add filtering logic here
     work_orders = WorkOrder.query.all()
     return jsonify([{
         'id': order.id,

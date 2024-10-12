@@ -20,12 +20,12 @@ class MaintenanceLog(db.Model):
     description = db.Column(db.Text, nullable=False)
     allocation = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    work_orders = db.relationship('WorkOrder', backref='maintenance_log', lazy=True)
+    work_order = db.relationship('WorkOrder', backref='maintenance_log', uselist=False, cascade='all, delete-orphan')
 
 class WorkOrder(db.Model):
     __tablename__ = 'work_orders'
     id = db.Column(db.Integer, primary_key=True)
-    maintenance_log_id = db.Column(db.Integer, db.ForeignKey('maintenance_logs.id'), nullable=False)
+    maintenance_log_id = db.Column(db.Integer, db.ForeignKey('maintenance_logs.id'), nullable=False, unique=True)
     status = db.Column(db.String(20), nullable=False)
     assigned_to = db.Column(db.String(100), nullable=False)
     scheduled_date = db.Column(db.Date, nullable=False)

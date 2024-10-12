@@ -3,12 +3,13 @@
 {% block title %}Maintenance Log - Builders Maintenance Management{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Maintenance Log</h1>
+<h1 class="mb-4">Maintenance Log and Work Order</h1>
 
 <div class="card">
     <div class="card-body">
         <form id="maintenance-log-form" method="POST">
             {{ form.hidden_tag() }}
+            <h2 class="h4 mb-3">Maintenance Log Details</h2>
             <div class="mb-3">
                 {{ form.date.label(class="form-label") }}
                 {{ form.date(class="form-control", type="date") }}
@@ -33,7 +34,33 @@
                 {{ form.allocation.label(class="form-label") }}
                 {{ form.allocation(class="form-control") }}
             </div>
-            <button type="submit" class="btn btn-primary">Submit Maintenance Log</button>
+
+            <h2 class="h4 mb-3 mt-4">Work Order Details</h2>
+            <div class="mb-3">
+                {{ form.status.label(class="form-label") }}
+                {{ form.status(class="form-select") }}
+            </div>
+            <div class="mb-3">
+                {{ form.assigned_to.label(class="form-label") }}
+                {{ form.assigned_to(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                {{ form.scheduled_date.label(class="form-label") }}
+                {{ form.scheduled_date(class="form-control", type="date") }}
+            </div>
+            <div class="mb-3">
+                {{ form.priority.label(class="form-label") }}
+                {{ form.priority(class="form-select") }}
+            </div>
+            <div class="mb-3">
+                {{ form.notes.label(class="form-label") }}
+                {{ form.notes(class="form-control", rows="4") }}
+            </div>
+            <div class="mb-3 form-check">
+                {{ form.is_critical(class="form-check-input") }}
+                {{ form.is_critical.label(class="form-check-label") }}
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Maintenance Log and Work Order</button>
         </form>
     </div>
 </div>
