@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, SelectField, BooleanField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from models import User
+from models import User, MaintenanceLog
 
 class MaintenanceLogForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()])
@@ -31,6 +31,10 @@ class WorkOrderForm(FlaskForm):
         ('High', 'High')
     ], validators=[DataRequired()])
     is_critical = BooleanField('Critical Task')
+
+    def __init__(self, *args, **kwargs):
+        super(WorkOrderForm, self).__init__(*args, **kwargs)
+        self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in MaintenanceLog.query.all()]
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])
