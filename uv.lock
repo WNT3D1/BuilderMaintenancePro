@@ -548,7 +548,9 @@ dependencies = [
     { name = "flask-wtf" },
     { name = "fpdf" },
     { name = "psycopg2-binary" },
+    { name = "sqlalchemy" },
     { name = "werkzeug" },
+    { name = "wtforms" },
 ]
 
 [package.metadata]
@@ -562,7 +564,9 @@ requires-dist = [
     { name = "flask-wtf", specifier = "==1.1.1" },
     { name = "fpdf", specifier = "==1.7.2" },
     { name = "psycopg2-binary", specifier = "==2.9.6" },
+    { name = "sqlalchemy", specifier = ">=2.0.35" },
     { name = "werkzeug", specifier = "==2.3.4" },
+    { name = "wtforms", specifier = ">=3.1.2" },
 ]
 
 [[package]]
