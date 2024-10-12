@@ -25,13 +25,9 @@ class WorkOrderForm(FlaskForm):
         super(WorkOrderForm, self).__init__(*args, **kwargs)
         logging.info("Initializing WorkOrderForm")
         try:
-            maintenance_logs = MaintenanceLog.query.all()
+            maintenance_logs = MaintenanceLog.query.order_by(MaintenanceLog.date.desc()).all()
             logging.info(f"Number of maintenance logs retrieved: {len(maintenance_logs)}")
-            self.maintenance_log_id.choices = []
-            for log in maintenance_logs:
-                choice = (log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...")
-                self.maintenance_log_id.choices.append(choice)
-                logging.info(f"Added choice: {choice}")
+            self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in maintenance_logs]
             logging.info(f"Final maintenance log choices: {self.maintenance_log_id.choices}")
             if not self.maintenance_log_id.choices:
                 logging.warning("No maintenance log choices available")

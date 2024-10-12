@@ -171,6 +171,10 @@ def filtered_work_orders():
 @app.route('/create_test_user')
 def create_test_user():
     try:
+        existing_user = User.query.filter_by(username='testuser').first()
+        if existing_user:
+            return jsonify({'message': 'Test user already exists'}), 200
+        
         test_user = User(username='testuser', email='testuser@example.com')
         test_user.set_password('testpassword')
         db.session.add(test_user)
