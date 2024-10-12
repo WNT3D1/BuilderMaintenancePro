@@ -33,7 +33,7 @@
 {% endif %}
 
 <div class="row g-2 mb-2">
-    <div class="col-md-6">
+    <div class="col-md-12">
         <div class="card h-100">
             <div class="card-body p-2">
                 <h5 class="card-title fs-6">Work Order Statistics</h5>
@@ -54,16 +54,6 @@
                         <p class="mb-0 small">Completed</p>
                         <p class="h6 text-success" id="completed-work-orders">{{ completed_count }}</p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-body p-2">
-                <h5 class="card-title fs-6">Work Order Status</h5>
-                <div style="height: 200px;">
-                    <canvas id="work-order-chart"></canvas>
                 </div>
             </div>
         </div>
