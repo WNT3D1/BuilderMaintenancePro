@@ -1,5 +1,5 @@
 import logging
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
 from models import MaintenanceLog, WorkOrder, Notification, User
@@ -9,6 +9,7 @@ from sqlalchemy import func, and_
 import csv
 import io
 from fpdf import FPDF
+from utils import generate_work_order_pdf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -183,3 +184,18 @@ def create_test_user():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/work_order_pdf/<int:work_order_id>')
+@login_required
+def work_order_pdf(work_order_id):
+    pdf_content = generate_work_order_pdf(work_order_id)
+    if pdf_content:
+        return send_file(
+            io.BytesIO(pdf_content),
+            mimetype='application/pdf',
+            as_attachment=True,
+            attachment_filename=f'work_order_{work_order_id}.pdf'
+        )
+    else:
+        flash('Work order not found', 'error')
+        return redirect(url_for('dashboard'))

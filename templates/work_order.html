@@ -46,11 +46,66 @@
         </form>
     </div>
 </div>
+
+<h2 class="mt-4 mb-3">Existing Work Orders</h2>
+<div class="table-responsive">
+    <table class="table table-striped" id="work-orders-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Maintenance Log ID</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Scheduled Date</th>
+                <th>Priority</th>
+                <th>Critical</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Work orders will be dynamically inserted here -->
+        </tbody>
+    </table>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/work_order.js') }}"></script>
 <script>
 console.log("Maintenance log choices:", {{ form.maintenance_log_id.choices | tojson | safe }});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.querySelector('#work-orders-table tbody');
+    
+    function updateWorkOrdersTable(workOrders) {
+        tableBody.innerHTML = '';
+        workOrders.forEach(order => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${order.id}</td>
+                <td>${order.maintenance_log_id}</td>
+                <td>${order.status}</td>
+                <td>${order.assigned_to}</td>
+                <td>${order.scheduled_date}</td>
+                <td>${order.priority}</td>
+                <td>${order.is_critical ? 'Yes' : 'No'}</td>
+                <td>
+                    <a href="/work_order_pdf/${order.id}" class="btn btn-sm btn-secondary" target="_blank">Download PDF</a>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Fetch and display work orders
+    fetch('/filtered_work_orders')
+        .then(response => response.json())
+        .then(data => {
+            updateWorkOrdersTable(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+});
 </script>
 {% endblock %}
