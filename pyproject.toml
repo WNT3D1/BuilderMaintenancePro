@@ -13,7 +13,7 @@ dependencies = [
     "fpdf==1.7.2",
     "flask-migrate==4.0.4",
     "flask-login==0.6.2",
-    "werkzeug==3.0.3",
+    "werkzeug==2.3.4",
     "sqlalchemy>=2.0.35",
     "wtforms>=3.1.2",
 ]
