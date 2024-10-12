@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, SelectField, BooleanField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from models import User, MaintenanceLog
+import logging
 
 class MaintenanceLogForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()])
@@ -34,7 +35,10 @@ class WorkOrderForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super(WorkOrderForm, self).__init__(*args, **kwargs)
-        self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in MaintenanceLog.query.all()]
+        maintenance_logs = MaintenanceLog.query.all()
+        logging.info(f"Number of maintenance logs found: {len(maintenance_logs)}")
+        self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in maintenance_logs]
+        logging.info(f"Choices for maintenance_log_id: {self.maintenance_log_id.choices}")
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])

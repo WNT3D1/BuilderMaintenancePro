@@ -83,6 +83,11 @@
             <div class="mb-3">
                 {{ form.maintenance_log_id.label(class="form-label") }}
                 {{ form.maintenance_log_id(class="form-select") }}
+                {% if form.maintenance_log_id.errors %}
+                    {% for error in form.maintenance_log_id.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div class="mb-3">
                 {{ form.status.label(class="form-label") }}
@@ -116,4 +121,7 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/work_order.js') }}"></script>
+<script>
+console.log("Maintenance log choices:", {{ form.maintenance_log_id.choices | tojson | safe }});
+</script>
 {% endblock %}
