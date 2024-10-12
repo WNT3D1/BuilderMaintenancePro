@@ -1,14 +1,14 @@
-from flask import render_template, request, redirect, url_for, jsonify, flash
+import logging
+from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask_login import login_user, login_required, logout_user, current_user
 from app import app, db
-from models import Company, MaintenanceLog, WorkOrder, Notification, User
+from models import MaintenanceLog, WorkOrder, Notification, User
 from forms import MaintenanceLogForm, WorkOrderForm, CompanySetupForm, LoginForm, RegistrationForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 import csv
 import io
 from fpdf import FPDF
-from flask_login import login_user, login_required, logout_user, current_user
-import logging
 
 logging.basicConfig(level=logging.INFO)
 
@@ -65,7 +65,11 @@ def work_order():
         for log in all_logs:
             logging.info(f"Log ID: {log.id}, Date: {log.date}, Lot Number: {log.lot_number}")
         
+        # Debug logging for form.maintenance_log_id.choices
+        logging.info(f"Maintenance log choices before rendering template: {form.maintenance_log_id.choices}")
+        
         if form.validate_on_submit():
+            logging.info(f"Form validated successfully. Maintenance log ID: {form.maintenance_log_id.data}")
             new_order = WorkOrder(
                 maintenance_log_id=form.maintenance_log_id.data,
                 status=form.status.data,
@@ -90,8 +94,12 @@ def work_order():
 
         if request.method == 'POST' and not form.validate():
             logging.error(f"Form validation errors: {form.errors}")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    logging.error(f"Error in {field}: {error}")
             flash('There was an error creating the work order. Please check the form and try again.', 'danger')
 
+        logging.info(f"Rendering work_order template with {len(form.maintenance_log_id.choices)} maintenance log choices")
         return render_template('work_order.html', form=form)
     except Exception as e:
         logging.error(f"Error in work_order route: {str(e)}")
@@ -119,6 +127,20 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Your account has been created! You are now able to log in', 'success')
+        return redirect(url_for('login'))
+    return render_template('signup.html', form=form)
 
 @app.route('/dashboard')
 @login_required

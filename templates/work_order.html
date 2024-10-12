@@ -1,83 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Work Orders - Builders Maintenance Management{% endblock %}
+{% block title %}Work Order - Builders Maintenance Management{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Work Orders</h1>
-
-<div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title">Filter and Sort</h5>
-        <form id="filter-form" class="row g-3">
-            <div class="col-md-3">
-                <label for="start_date" class="form-label">Start Date</label>
-                <input type="date" class="form-control" id="start_date" name="start_date">
-            </div>
-            <div class="col-md-3">
-                <label for="end_date" class="form-label">End Date</label>
-                <input type="date" class="form-control" id="end_date" name="end_date">
-            </div>
-            <div class="col-md-2">
-                <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">All</option>
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="priority" class="form-label">Priority</label>
-                <select class="form-select" id="priority" name="priority">
-                    <option value="">All</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="sort_by" class="form-label">Sort By</label>
-                <select class="form-select" id="sort_by" name="sort_by">
-                    <option value="scheduled_date">Scheduled Date</option>
-                    <option value="status">Status</option>
-                    <option value="priority">Priority</option>
-                </select>
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">Apply Filters</button>
-            </div>
-        </form>
-    </div>
-</div>
+<h1 class="mb-4">Create Work Order</h1>
 
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">Work Orders</h5>
-        <div class="table-responsive">
-            <table class="table table-striped" id="work-orders-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Maintenance Log</th>
-                        <th>Status</th>
-                        <th>Assigned To</th>
-                        <th>Scheduled Date</th>
-                        <th>Priority</th>
-                        <th>Critical</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Work orders will be dynamically inserted here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="card mt-4">
-    <div class="card-body">
-        <h5 class="card-title">Create New Work Order</h5>
         <form id="work-order-form" method="POST">
             {{ form.hidden_tag() }}
             <div class="mb-3">

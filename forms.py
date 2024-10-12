@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, SelectField, BooleanField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from models import User, MaintenanceLog
+from models import MaintenanceLog, User
 import logging
 
 class MaintenanceLogForm(FlaskForm):
@@ -11,13 +11,6 @@ class MaintenanceLogForm(FlaskForm):
     maintenance_class = SelectField('Maintenance Class', choices=[('3MTR', '3MTR'), ('IAS', 'IAS'), ('Supplier', 'Supplier')], validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
     allocation = StringField('Allocation', validators=[DataRequired(), Length(max=100)])
-    # Work Order fields
-    status = SelectField('Status', choices=[('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed')], validators=[DataRequired()])
-    assigned_to = StringField('Assigned To', validators=[DataRequired(), Length(max=100)])
-    scheduled_date = DateField('Scheduled Date', validators=[DataRequired()])
-    priority = SelectField('Priority', choices=[('Low', 'Low'), ('Medium', 'Medium'), ('High', 'High')], validators=[DataRequired()])
-    notes = TextAreaField('Notes')
-    is_critical = BooleanField('Critical')
 
 class WorkOrderForm(FlaskForm):
     maintenance_log_id = SelectField('Maintenance Log', coerce=int, validators=[DataRequired()])
@@ -31,14 +24,20 @@ class WorkOrderForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(WorkOrderForm, self).__init__(*args, **kwargs)
         logging.info("Initializing WorkOrderForm")
-        maintenance_logs = MaintenanceLog.query.all()
-        logging.info(f"Number of maintenance logs retrieved: {len(maintenance_logs)}")
-        self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in maintenance_logs]
-        logging.info(f"Maintenance log choices: {self.maintenance_log_id.choices}")
-        if not self.maintenance_log_id.choices:
-            logging.warning("No maintenance log choices available")
-        for log in maintenance_logs:
-            logging.info(f"Log ID: {log.id}, Date: {log.date}, Lot Number: {log.lot_number}")
+        try:
+            maintenance_logs = MaintenanceLog.query.all()
+            logging.info(f"Number of maintenance logs retrieved: {len(maintenance_logs)}")
+            self.maintenance_log_id.choices = []
+            for log in maintenance_logs:
+                choice = (log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...")
+                self.maintenance_log_id.choices.append(choice)
+                logging.info(f"Added choice: {choice}")
+            logging.info(f"Final maintenance log choices: {self.maintenance_log_id.choices}")
+            if not self.maintenance_log_id.choices:
+                logging.warning("No maintenance log choices available")
+        except Exception as e:
+            logging.error(f"Error while setting maintenance_log_id choices: {str(e)}")
+            self.maintenance_log_id.choices = []
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])
