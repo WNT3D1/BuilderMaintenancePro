@@ -35,8 +35,15 @@ def work_order():
     logging.info(f"WorkOrderForm created with maintenance_log_id choices: {form.maintenance_log_id.choices}")
     
     if form.validate_on_submit():
-        new_order = WorkOrder()
-        form.populate_obj(new_order)
+        new_order = WorkOrder(
+            maintenance_log_id=form.maintenance_log_id.data,
+            status=form.status.data,
+            assigned_to=form.assigned_to.data,
+            scheduled_date=form.scheduled_date.data,
+            priority=form.priority.data,
+            notes=form.notes.data,
+            is_critical=form.is_critical.data
+        )
         db.session.add(new_order)
         db.session.commit()
 
@@ -80,3 +87,18 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/filtered_work_orders')
+@login_required
+def filtered_work_orders():
+    # Add filtering logic here
+    work_orders = WorkOrder.query.all()
+    return jsonify([{
+        'id': order.id,
+        'maintenance_log_id': order.maintenance_log_id,
+        'status': order.status,
+        'assigned_to': order.assigned_to,
+        'scheduled_date': order.scheduled_date.strftime('%Y-%m-%d'),
+        'priority': order.priority,
+        'is_critical': order.is_critical
+    } for order in work_orders])

@@ -8,37 +8,32 @@ class MaintenanceLogForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()])
     lot_number = StringField('Lot Number', validators=[DataRequired(), Length(max=50)])
     contact_details = StringField('Contact Details', validators=[DataRequired(), Length(max=255)])
-    maintenance_class = SelectField('Maintenance Class', choices=[
-        ('3MTR', '3MTR'),
-        ('IAS', 'IAS'),
-        ('Supplier', 'Supplier')
-    ], validators=[DataRequired()])
+    maintenance_class = SelectField('Maintenance Class', choices=[('3MTR', '3MTR'), ('IAS', 'IAS'), ('Supplier', 'Supplier')], validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
     allocation = StringField('Allocation', validators=[DataRequired(), Length(max=100)])
 
 class WorkOrderForm(FlaskForm):
     maintenance_log_id = SelectField('Maintenance Log', coerce=int, validators=[DataRequired()])
-    status = SelectField('Status', choices=[
-        ('Pending', 'Pending'),
-        ('In Progress', 'In Progress'),
-        ('Completed', 'Completed')
-    ], validators=[DataRequired()])
+    status = SelectField('Status', choices=[('Pending', 'Pending'), ('In Progress', 'In Progress'), ('Completed', 'Completed')], validators=[DataRequired()])
     assigned_to = StringField('Assigned To', validators=[DataRequired(), Length(max=100)])
     scheduled_date = DateField('Scheduled Date', validators=[DataRequired()])
+    priority = SelectField('Priority', choices=[('Low', 'Low'), ('Medium', 'Medium'), ('High', 'High')], validators=[DataRequired()])
     notes = TextAreaField('Notes')
-    priority = SelectField('Priority', choices=[
-        ('Low', 'Low'),
-        ('Medium', 'Medium'),
-        ('High', 'High')
-    ], validators=[DataRequired()])
-    is_critical = BooleanField('Critical Task')
+    is_critical = BooleanField('Critical')
 
     def __init__(self, *args, **kwargs):
         super(WorkOrderForm, self).__init__(*args, **kwargs)
-        maintenance_logs = MaintenanceLog.query.all()
-        logging.info(f"Number of maintenance logs found: {len(maintenance_logs)}")
-        self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in maintenance_logs]
-        logging.info(f"Choices for maintenance_log_id: {self.maintenance_log_id.choices}")
+        logging.info("Initializing WorkOrderForm")
+        try:
+            maintenance_logs = MaintenanceLog.query.all()
+            logging.info(f"Number of maintenance logs found: {len(maintenance_logs)}")
+            if maintenance_logs:
+                self.maintenance_log_id.choices = [(log.id, f"{log.date} - {log.lot_number} - {log.description[:50]}...") for log in maintenance_logs]
+                logging.info(f"Choices for maintenance_log_id: {self.maintenance_log_id.choices}")
+            else:
+                logging.warning("No maintenance logs found in the database.")
+        except Exception as e:
+            logging.error(f"Error fetching maintenance logs: {str(e)}")
 
 class CompanySetupForm(FlaskForm):
     name = StringField('Company Name', validators=[DataRequired(), Length(max=100)])
