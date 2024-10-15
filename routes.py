@@ -183,7 +183,8 @@ def create_test_user():
         return jsonify({'message': 'Test user created successfully'}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        logging.error(f"Error creating test user: {e}", exc_info=True)
+        return jsonify({'error': 'An internal error has occurred. Please try again later.'}), 500
 
 @app.route('/work_order_pdf/<int:work_order_id>')
 @login_required
