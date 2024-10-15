@@ -117,8 +117,12 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             logging.info(f"User {user.username} logged in successfully")
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('dashboard'))
+            next_page = request.args.get('next', '')
+            from urllib.parse import urlparse
+            next_page = next_page.replace('\\', '')
+            if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
+                return redirect(next_page or url_for('dashboard'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password', 'danger')
     return render_template('login.html', form=form)
